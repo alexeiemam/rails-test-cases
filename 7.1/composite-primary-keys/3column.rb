@@ -79,6 +79,8 @@ class Mother < ActiveRecord::Base
 
   has_many :kids, 
     query_constraints: [:version_id, :organisation_id, :mother_id]
+
+  has_many :entanglements, through: :kids, source: :father
 end
 
 class Father < ActiveRecord::Base
@@ -91,6 +93,8 @@ class Father < ActiveRecord::Base
 
   has_many :kids, 
     query_constraints: [:version_id, :organisation_id, :father_id]
+
+  has_many :entanglements, through: :kids, source: :mother
 end
 
 class Kid < ActiveRecord::Base
@@ -129,14 +133,21 @@ class BugTest < Minitest::Test
         name: 'Carlito'
       )) 
 
+    father_2 = Father.create!(base_version_organisation_details.merge(
+      local_id: 1982,
+      name: 'Abdel-aziz'
+    ))
+
+    ### Can pass mother/father objects and let Rails figure it out
     kid_1 = Kid.create!(base_version_organisation_details.merge(
       local_id: 1,
       name: 'Jim',
-      mother_id: mother.local_id,
-      father_id: father.local_id,
+      mother: mother,
+      father: father,
       medals: 5
     ))
 
+    ### Can pass specific mother/father Local IDs
     kid_2 = Kid.create!(base_version_organisation_details.merge(
       local_id: 2,
       name: 'Jesse',
@@ -144,22 +155,38 @@ class BugTest < Minitest::Test
       father_id: father.local_id,
       medals: 9
     ))
+
+    kid_3 = Kid.create!(base_version_organisation_details.merge(
+      local_id: 29,
+      name: 'Sinbad',
+      mother: mother,
+      father: father_2,
+      medals: 11
+    ))
     
     puts "assert_equal 1, Father.count" 
-    assert_equal 1, Father.count 
+    assert_equal 2, Father.count 
     puts "assert_equal 1, Mother.count"
     assert_equal 1, Mother.count
     puts "assert_equal 2, Kid.count"  
-    assert_equal 2, Kid.count  
+    assert_equal 3, Kid.count  
     puts "assert_equal 2, father.kids.count"
     assert_equal 2, father.kids.count
     puts "assert_equal 2, mother.kids.count"
-    assert_equal 2, mother.kids.count
+    assert_equal 3, mother.kids.count
     puts "assert_equal father.kids.to_a, mother.kids.to_a " 
-    assert_equal father.kids, mother.kids
-    puts "assert_equal kid_1.father, father"
     assert_equal kid_1.father, father
-    assert_equal 14, mother.kids.sum(:medals)
-    
+    puts "assert_equal 25, mother.kids.sum(:medals)"
+    assert_equal 25, mother.kids.sum(:medals)
+    puts "assert_equal kid_1.father.entanglements.count, kid_2.father.entanglements.count"
+    assert_equal kid_1.father.entanglements.count, kid_2.father.entanglements.count
+    puts "assert_equal kid_2.mother.entanglements.count, kid_1.mother.entanglements.count"
+    assert_equal kid_2.mother.entanglements.count, kid_1.mother.entanglements.count
+    puts "assert_equal 3, kid_3.mother.entanglements.count"
+    assert_equal 3, kid_3.mother.entanglements.count
+    puts "assert_equal 1, kid_3.father.entanglements.count"
+    assert_equal 1, kid_3.father.entanglements.count
+    puts "assert_equal 2, kid_2.father.entanglements.count"
+    assert_equal 2, kid_2.father.entanglements.count
   end
 end
