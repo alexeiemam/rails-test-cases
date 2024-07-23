@@ -12,6 +12,7 @@ gemfile(true) do
   # gem "rails", github: "rails/rails", branch: "main"
 
   gem "sqlite3", '~> 1.4'
+  gem 'activerecord_where_assoc',  path: "/usr/app/vendor/activerecord_where_assoc"
 end
 
 require "active_record"
@@ -163,30 +164,13 @@ class BugTest < Minitest::Test
       father: father_2,
       medals: 11
     ))
-    
-    puts "assert_equal 1, Father.count" 
-    assert_equal 2, Father.count 
-    puts "assert_equal 1, Mother.count"
-    assert_equal 1, Mother.count
-    puts "assert_equal 2, Kid.count"  
-    assert_equal 3, Kid.count  
-    puts "assert_equal 2, father.kids.count"
-    assert_equal 2, father.kids.count
-    puts "assert_equal 2, mother.kids.count"
-    assert_equal 3, mother.kids.count
-    puts "assert_equal father.kids.to_a, mother.kids.to_a " 
-    assert_equal kid_1.father, father
-    puts "assert_equal 25, mother.kids.sum(:medals)"
-    assert_equal 25, mother.kids.sum(:medals)
-    puts "assert_equal kid_1.father.entanglements.count, kid_2.father.entanglements.count"
-    assert_equal kid_1.father.entanglements.count, kid_2.father.entanglements.count
-    puts "assert_equal kid_2.mother.entanglements.count, kid_1.mother.entanglements.count"
-    assert_equal kid_2.mother.entanglements.count, kid_1.mother.entanglements.count
-    puts "assert_equal 3, kid_3.mother.entanglements.count"
-    assert_equal 3, kid_3.mother.entanglements.count
-    puts "assert_equal 1, kid_3.father.entanglements.count"
-    assert_equal 1, kid_3.father.entanglements.count
-    puts "assert_equal 2, kid_2.father.entanglements.count"
-    assert_equal 2, kid_2.father.entanglements.count
+
+    assert_equal 1, Father.where_assoc_exists(:kids, {
+      version_id: version.id, 
+      organisation_id: organisation.local_id, 
+      medals: kid_3.medals
+    }).count
+
+    assert_equal 1,  Mother.where_assoc_count(2, :>, :entanglements).count
   end
 end
