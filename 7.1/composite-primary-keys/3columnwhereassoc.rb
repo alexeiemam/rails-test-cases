@@ -171,6 +171,11 @@ class BugTest < Minitest::Test
       medals: kid_3.medals
     }).count
 
+    assert_equal 2,  Father.where_assoc_exists(:entanglements).count
+    
+    assert_equal 2,  Father.where_assoc_count(0, :>, :entanglements).count
+
     assert_equal 1,  Mother.where_assoc_count(2, :>, :entanglements).count
+
   end
 end
